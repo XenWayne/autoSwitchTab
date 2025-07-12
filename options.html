@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>标签页自动切换器设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>标签页自动切换器设置</h1>
+    
+    <div class="setting">
+      <label for="stayTime">标签页停留时间 (秒):</label>
+      <input type="number" id="stayTime" min="1" max="60" value="5">
+    </div>
+    
+    <div class="setting">
+      <label for="enableSwitching">
+        <input type="checkbox" id="enableSwitching">
+        启用自动切换
+      </label>
+    </div>
+    
+    <div class="setting">
+      <label for="shouldRefresh">
+        <input type="checkbox" id="shouldRefresh" checked>
+        切换时刷新标签页
+      </label>
+    </div>
+    
+    <div class="setting">
+      <label for="noSwitchUrls">不切换的URL（每行一个）：</label>
+      <textarea id="noSwitchUrls" rows="3" placeholder="例如：https://example.com/
+https://google.com/"></textarea>
+      <small>被列出的URL（支持部分匹配）将不会被自动切换</small>
+    </div>
+    
+    <div class="setting">
+      <label for="noRefreshUrls">不刷新的URL（每行一个）：</label>
+      <textarea id="noRefreshUrls" rows="3" placeholder="例如：https://mail.google.com/
+https://docs.google.com/"></textarea>
+      <small>被列出的URL（支持部分匹配）将不会被自动刷新</small>
+    </div>
+    
+    <button id="saveSettings" class="save-btn">保存并应用配置</button>
+    <div id="status"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
