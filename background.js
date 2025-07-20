@@ -1,6 +1,6 @@
 let currentTabId = null;
 let isRunning = false;
-let intervalId = null;
+const ALARM_NAME = 'tabSwitchAlarm';
 
 // 从存储中获取配置并应用
 function loadSettings() {
@@ -140,49 +140,58 @@ async function startSwitching() {
 
   isRunning = true;
 
-  // 使用递归setTimeout确保时间间隔准确
-  async function scheduleNextSwitch() {
-    if (!isRunning) {
-      return;
-    }
+  // 立即执行第一次切换
+  await switchToNextTab();
 
-    try {
-      await switchToNextTab();
+  // 创建alarm进行后续切换
+  await createSwitchAlarm(settings.stayTime);
+}
 
-      // 重新获取最新配置（可能在运行过程中被修改）
-      const currentSettings = await loadSettings();
-      if (!currentSettings.enableSwitching) {
-        stopSwitching();
-        return;
-      }
+// 创建切换alarm
+async function createSwitchAlarm(stayTimeSeconds) {
+  try {
+    // 清除现有的alarm
+    await chrome.alarms.clear(ALARM_NAME);
 
-      // 设置下一次切换
-      intervalId = setTimeout(scheduleNextSwitch, currentSettings.stayTime * 1000);
+    // 创建新的alarm
+    // 注意：Chrome alarms的最小间隔是1分钟（对于已发布的扩展）
+    // 但对于开发者模式下的扩展，可以使用更短的间隔
+    const delayInMinutes = stayTimeSeconds / 60;
 
-    } catch (error) {
-      console.error('切换过程中发生错误:', error);
+    await chrome.alarms.create(ALARM_NAME, {
+      delayInMinutes: delayInMinutes,
+      periodInMinutes: delayInMinutes
+    });
 
-      // 即使出错也要继续运行，但增加重试延迟
-      const retryDelay = Math.min((settings.stayTime || 5) * 1000, 10000); // 最多延迟10秒
-      intervalId = setTimeout(scheduleNextSwitch, retryDelay);
+    console.log(`创建alarm，间隔: ${stayTimeSeconds}秒`);
+  } catch (error) {
+    console.error('创建alarm失败:', error);
+    // 如果alarm创建失败，回退到setTimeout（适用于短间隔）
+    if (stayTimeSeconds <= 30) {
+      setTimeout(async () => {
+        if (isRunning) {
+          await switchToNextTab();
+          await createSwitchAlarm(stayTimeSeconds);
+        }
+      }, stayTimeSeconds * 1000);
     }
   }
-
-  // 立即执行第一次切换
-  scheduleNextSwitch();
 }
 
 // 停止切换定时器
-function stopSwitching() {
+async function stopSwitching() {
   if (!isRunning) {
     return;
   }
 
   isRunning = false;
 
-  if (intervalId) {
-    clearTimeout(intervalId);
-    intervalId = null;
+  // 清除alarm
+  try {
+    await chrome.alarms.clear(ALARM_NAME);
+    console.log('已清除切换alarm');
+  } catch (error) {
+    console.error('清除alarm失败:', error);
   }
 
   // 重置当前标签ID
@@ -201,6 +210,33 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   // 如果当前标签页URL发生变化，重置标签ID以确保下次切换正确
   if (changeInfo.url && tabId === currentTabId) {
     currentTabId = null;
+  }
+});
+
+// 监听alarm事件
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === ALARM_NAME && isRunning) {
+    try {
+      await switchToNextTab();
+
+      // 检查配置是否仍然启用
+      const settings = await loadSettings();
+      if (!settings.enableSwitching) {
+        stopSwitching();
+        return;
+      }
+
+      // 检查时间间隔是否有变化，如果有变化则重新创建alarm
+      const currentDelayMinutes = alarm.periodInMinutes;
+      const newDelayMinutes = settings.stayTime / 60;
+
+      if (Math.abs(currentDelayMinutes - newDelayMinutes) > 0.01) {
+        console.log('检测到时间间隔变化，重新创建alarm');
+        await createSwitchAlarm(settings.stayTime);
+      }
+    } catch (error) {
+      console.error('Alarm触发时发生错误:', error);
+    }
   }
 });
 
