@@ -26,5 +26,13 @@
             "48": "icons/icon48.svg",
             "128": "icons/icon128.svg"
         }
+    },
+    "commands": {
+        "toggleSwitching": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+Y"
+            },
+            "description": "启动/停止 自动切换标签页"
+        }
     }
 }

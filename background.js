@@ -206,6 +206,38 @@ async function stopSwitching() {
   currentTabId = null;
 }
 
+// 新增函数：切换自动切换状态
+async function toggleSwitching() {
+  try {
+    const settings = await new Promise((resolve) => {
+      chrome.storage.sync.get({
+        enableSwitching: false
+      }, (items) => {
+        resolve(items);
+      });
+    });
+    const newStatus = !settings.enableSwitching;
+    chrome.storage.sync.set({ enableSwitching: newStatus }, () => {
+      console.log(`自动切换已 ${newStatus ? '启动' : '停止'}`);
+      if (newStatus) {
+        startSwitching();
+      } else {
+        stopSwitching();
+      }
+    });
+  } catch (error) {
+    console.error('切换自动切换状态错误:', error);
+  }
+}
+
+// 监听快捷键命令
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'toggleSwitching') {
+    console.log('快捷键触发：切换自动切换状态');
+    toggleSwitching();
+  }
+});
+
 // 监听alarm事件
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === ALARM_NAME) {

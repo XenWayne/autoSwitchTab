@@ -5,13 +5,15 @@ function loadOptions() {
       enableSwitching: false,
       shouldRefresh: true,
       noSwitchUrls: '',
-      noRefreshUrls: ''
+      noRefreshUrls: '',
+      customShortcut: "Ctrl+Shift+Y"
     }, (items) => {
     document.getElementById('stayTime').value = items.stayTime;
     document.getElementById('enableSwitching').checked = items.enableSwitching;
     document.getElementById('shouldRefresh').checked = items.shouldRefresh;
     document.getElementById('noSwitchUrls').value = items.noSwitchUrls;
     document.getElementById('noRefreshUrls').value = items.noRefreshUrls;
+    document.getElementById('customShortcut').value = items.customShortcut;
   });
 }
 
@@ -21,16 +23,17 @@ function saveOptions() {
   const enableSwitching = document.getElementById('enableSwitching').checked;
   const noSwitchUrls = document.getElementById('noSwitchUrls').value;
   const noRefreshUrls = document.getElementById('noRefreshUrls').value;
-
   const shouldRefresh = document.getElementById('shouldRefresh').checked;
-    chrome.storage.sync.set({
+  const customShortcut = document.getElementById('customShortcut').value || "Ctrl+Shift+Y";
+
+  chrome.storage.sync.set({
       stayTime: stayTime,
       enableSwitching: enableSwitching,
       shouldRefresh: shouldRefresh,
       noSwitchUrls: noSwitchUrls,
-      noRefreshUrls: noRefreshUrls
+      noRefreshUrls: noRefreshUrls,
+      customShortcut: customShortcut
     }, () => {
-    // 显示保存成功提示
     const status = document.getElementById('status');
     status.textContent = '配置已保存并生效';
     status.style.display = 'block';
