@@ -206,7 +206,7 @@ async function stopSwitching() {
   currentTabId = null;
 }
 
-// 新增函数：切换自动切换状态
+// 修改函数 toggleSwitching 添加提示通知
 async function toggleSwitching() {
   try {
     const settings = await new Promise((resolve) => {
@@ -224,6 +224,13 @@ async function toggleSwitching() {
       } else {
         stopSwitching();
       }
+      // 添加通知提示用户功能状态变化
+      chrome.notifications.create('', {
+        type: 'basic',
+        iconUrl: 'icons/icon48.svg',
+        title: '自动切换状态更新',
+        message: `自动切换已 ${newStatus ? '启动' : '停止'}`
+      });
     });
   } catch (error) {
     console.error('切换自动切换状态错误:', error);
